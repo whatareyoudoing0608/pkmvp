@@ -1,6 +1,28 @@
 import { tokenStore } from "../auth/tokenStore";
 
-const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").trim();
+function resolveBaseUrl() {
+  const configured = (import.meta.env.VITE_API_BASE_URL ?? "").trim();
+
+  if (configured) {
+    if (/^https?:\/\//i.test(configured)) {
+      return configured.replace(/\/$/, "");
+    }
+
+    if (typeof window !== "undefined") {
+      return `${window.location.protocol}//${configured.replace(/\/$/, "")}`;
+    }
+
+    return `http://${configured.replace(/\/$/, "")}`;
+  }
+
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:8084`;
+  }
+
+  return "";
+}
+
+const baseUrl = resolveBaseUrl();
 
 export class ApiError extends Error {
   status: number;
