@@ -1,0 +1,290 @@
+﻿/* =====================================================================
+   FILE      : V1__jira_core_schema.sql
+   PURPOSE   : Jira-style collaboration core schema for PKMVP (Oracle)
+   DATE      : 2026-03-06
+   ===================================================================== */
+
+SET SERVEROUTPUT ON;
+
+/* ---------------------------------------------------------------------
+   1) TASK extension (issue metadata)
+   --------------------------------------------------------------------- */
+DECLARE
+    PROCEDURE add_col(p_table VARCHAR2, p_col VARCHAR2, p_ddl VARCHAR2) IS
+        v_cnt NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_cnt
+          FROM USER_TAB_COLS
+         WHERE TABLE_NAME = UPPER(p_table)
+           AND COLUMN_NAME = UPPER(p_col);
+        IF v_cnt = 0 THEN
+            EXECUTE IMMEDIATE 'ALTER TABLE ' || p_table || ' ADD (' || p_ddl || ')';
+        END IF;
+    END;
+BEGIN
+    add_col('TASK', 'ISSUE_KEY',       'ISSUE_KEY VARCHAR2(30)');
+    add_col('TASK', 'TASK_TYPE',       'TASK_TYPE VARCHAR2(30)');
+    add_col('TASK', 'TEAM_ID',         'TEAM_ID VARCHAR2(50)');
+    add_col('TASK', 'PARENT_TASK_ID',  'PARENT_TASK_ID NUMBER');
+    add_col('TASK', 'BLOCKER_TYPE',    'BLOCKER_TYPE VARCHAR2(30)');
+    add_col('TASK', 'BLOCKER_REASON',  'BLOCKER_REASON VARCHAR2(1000)');
+    add_col('TASK', 'REVIEWER_ID',     'REVIEWER_ID NUMBER');
+    add_col('TASK', 'STORY_POINTS',    'STORY_POINTS NUMBER(10,2)');
+    add_col('TASK', 'PROJECT_ID',      'PROJECT_ID NUMBER');
+    add_col('TASK', 'SPRINT_ID',       'SPRINT_ID NUMBER');
+END;
+/
+
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt
+      FROM USER_CONSTRAINTS
+     WHERE TABLE_NAME = 'TASK'
+       AND CONSTRAINT_NAME = 'CK_TASK_TASK_TYPE';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE q'[ALTER TABLE TASK ADD CONSTRAINT CK_TASK_TASK_TYPE CHECK (TASK_TYPE IS NULL OR TASK_TYPE IN ('EPIC','STORY','TASK','SUBTASK','BUG','SPIKE','DOC','RESEARCH'))]';
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END;
+/
+
+/* ---------------------------------------------------------------------
+   2) PROJECT / BOARD / SPRINT
+   --------------------------------------------------------------------- */
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt FROM USER_TABLES WHERE TABLE_NAME = 'PROJECT';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE q'[
+            CREATE TABLE PKMVP.PROJECT
+            (
+                PROJECT_ID    NUMBER         NOT NULL,
+                PROJECT_KEY   VARCHAR2(20)   NOT NULL,
+                NAME          VARCHAR2(200)  NOT NULL,
+                DESCRIPTION   VARCHAR2(1000) NULL,
+                LEAD_USER_ID  NUMBER         NULL,
+                CREATED_AT    DATE           DEFAULT SYSDATE NOT NULL,
+                UPDATED_AT    DATE           DEFAULT SYSDATE NOT NULL,
+                CONSTRAINT PK_PROJECT PRIMARY KEY (PROJECT_ID),
+                CONSTRAINT UQ_PROJECT_KEY UNIQUE (PROJECT_KEY)
+            )]';
+    END IF;
+END;
+/
+
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'SEQ_PROJECT';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE PKMVP.SEQ_PROJECT START WITH 1 INCREMENT BY 1 NOCACHE';
+    END IF;
+END;
+/
+
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt FROM USER_TABLES WHERE TABLE_NAME = 'BOARD';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE q'[
+            CREATE TABLE PKMVP.BOARD
+            (
+                BOARD_ID      NUMBER         NOT NULL,
+                PROJECT_ID    NUMBER         NOT NULL,
+                NAME          VARCHAR2(200)  NOT NULL,
+                BOARD_TYPE    VARCHAR2(20)   DEFAULT 'KANBAN' NOT NULL,
+                CREATED_AT    DATE           DEFAULT SYSDATE NOT NULL,
+                UPDATED_AT    DATE           DEFAULT SYSDATE NOT NULL,
+                CONSTRAINT PK_BOARD PRIMARY KEY (BOARD_ID),
+                CONSTRAINT CK_BOARD_TYPE CHECK (BOARD_TYPE IN ('KANBAN','SCRUM'))
+            )]';
+    END IF;
+END;
+/
+
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'SEQ_BOARD';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE PKMVP.SEQ_BOARD START WITH 1 INCREMENT BY 1 NOCACHE';
+    END IF;
+END;
+/
+
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt FROM USER_TABLES WHERE TABLE_NAME = 'SPRINT';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE q'[
+            CREATE TABLE PKMVP.SPRINT
+            (
+                SPRINT_ID     NUMBER         NOT NULL,
+                BOARD_ID      NUMBER         NOT NULL,
+                NAME          VARCHAR2(200)  NOT NULL,
+                GOAL          VARCHAR2(1000) NULL,
+                START_DATE    DATE           NULL,
+                END_DATE      DATE           NULL,
+                STATUS        VARCHAR2(20)   DEFAULT 'PLANNED' NOT NULL,
+                CREATED_AT    DATE           DEFAULT SYSDATE NOT NULL,
+                UPDATED_AT    DATE           DEFAULT SYSDATE NOT NULL,
+                CONSTRAINT PK_SPRINT PRIMARY KEY (SPRINT_ID),
+                CONSTRAINT CK_SPRINT_STATUS CHECK (STATUS IN ('PLANNED','ACTIVE','CLOSED'))
+            )]';
+    END IF;
+END;
+/
+
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'SEQ_SPRINT';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE PKMVP.SEQ_SPRINT START WITH 1 INCREMENT BY 1 NOCACHE';
+    END IF;
+END;
+/
+
+/* ---------------------------------------------------------------------
+   3) TASK_COMMENT
+   --------------------------------------------------------------------- */
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt FROM USER_TABLES WHERE TABLE_NAME = 'TASK_COMMENT';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE q'[
+            CREATE TABLE PKMVP.TASK_COMMENT
+            (
+                COMMENT_ID         NUMBER         NOT NULL,
+                TASK_ID            NUMBER         NOT NULL,
+                PARENT_COMMENT_ID  NUMBER         NULL,
+                AUTHOR_ID          NUMBER         NOT NULL,
+                CONTENT            VARCHAR2(4000) NOT NULL,
+                EDITED_YN          CHAR(1)        DEFAULT 'N' NOT NULL,
+                DELETED_YN         CHAR(1)        DEFAULT 'N' NOT NULL,
+                CREATED_AT         DATE           DEFAULT SYSDATE NOT NULL,
+                UPDATED_AT         DATE           DEFAULT SYSDATE NOT NULL,
+                CONSTRAINT PK_TASK_COMMENT PRIMARY KEY (COMMENT_ID),
+                CONSTRAINT CK_TASK_COMMENT_EDITED CHECK (EDITED_YN IN ('Y','N')),
+                CONSTRAINT CK_TASK_COMMENT_DELETED CHECK (DELETED_YN IN ('Y','N'))
+            )]';
+    END IF;
+END;
+/
+
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'SEQ_TASK_COMMENT';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE PKMVP.SEQ_TASK_COMMENT START WITH 1 INCREMENT BY 1 NOCACHE';
+    END IF;
+END;
+/
+
+/* ---------------------------------------------------------------------
+   4) NOTIFICATION
+   --------------------------------------------------------------------- */
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt FROM USER_TABLES WHERE TABLE_NAME = 'NOTIFICATION';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE q'[
+            CREATE TABLE PKMVP.NOTIFICATION
+            (
+                NOTIFICATION_ID NUMBER         NOT NULL,
+                USER_ID         NUMBER         NOT NULL,
+                TYPE            VARCHAR2(30)   NOT NULL,
+                TITLE           VARCHAR2(200)  NOT NULL,
+                MESSAGE         VARCHAR2(1000) NULL,
+                TARGET_TYPE     VARCHAR2(30)   NULL,
+                TARGET_ID       NUMBER         NULL,
+                IS_READ         CHAR(1)        DEFAULT 'N' NOT NULL,
+                CREATED_AT      DATE           DEFAULT SYSDATE NOT NULL,
+                CONSTRAINT PK_NOTIFICATION PRIMARY KEY (NOTIFICATION_ID),
+                CONSTRAINT CK_NOTIFICATION_READ CHECK (IS_READ IN ('Y','N'))
+            )]';
+    END IF;
+END;
+/
+
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'SEQ_NOTIFICATION';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE PKMVP.SEQ_NOTIFICATION START WITH 1 INCREMENT BY 1 NOCACHE';
+    END IF;
+END;
+/
+
+/* ---------------------------------------------------------------------
+   5) AUDIT_LOG
+   --------------------------------------------------------------------- */
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt FROM USER_TABLES WHERE TABLE_NAME = 'AUDIT_LOG';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE q'[
+            CREATE TABLE PKMVP.AUDIT_LOG
+            (
+                AUDIT_ID     NUMBER         NOT NULL,
+                ENTITY_TYPE  VARCHAR2(50)   NOT NULL,
+                ENTITY_ID    NUMBER         NOT NULL,
+                ACTION_TYPE  VARCHAR2(30)   NOT NULL,
+                BEFORE_JSON  CLOB           NULL,
+                AFTER_JSON   CLOB           NULL,
+                ACTOR_ID     NUMBER         NOT NULL,
+                CREATED_AT   DATE           DEFAULT SYSDATE NOT NULL,
+                CONSTRAINT PK_AUDIT_LOG PRIMARY KEY (AUDIT_ID)
+            )]';
+    END IF;
+END;
+/
+
+DECLARE
+    v_cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_cnt FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'SEQ_AUDIT_LOG';
+    IF v_cnt = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE PKMVP.SEQ_AUDIT_LOG START WITH 1 INCREMENT BY 1 NOCACHE';
+    END IF;
+END;
+/
+
+/* ---------------------------------------------------------------------
+   6) indexes
+   --------------------------------------------------------------------- */
+DECLARE
+    PROCEDURE add_idx(p_name VARCHAR2, p_sql VARCHAR2) IS
+        v_cnt NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_cnt FROM USER_INDEXES WHERE INDEX_NAME = UPPER(p_name);
+        IF v_cnt = 0 THEN
+            EXECUTE IMMEDIATE p_sql;
+        END IF;
+    END;
+BEGIN
+    add_idx('IX_TASK_PROJECT',              'CREATE INDEX PKMVP.IX_TASK_PROJECT ON TASK(PROJECT_ID, STATUS, PRIORITY)');
+    add_idx('IX_TASK_SPRINT',               'CREATE INDEX PKMVP.IX_TASK_SPRINT ON TASK(SPRINT_ID, STATUS)');
+    add_idx('IX_TASK_ASSIGNEE_STATUS',      'CREATE INDEX PKMVP.IX_TASK_ASSIGNEE_STATUS ON TASK(ASSIGNEE_ID, STATUS)');
+    add_idx('IX_TASK_COMMENT_TASK_CREATED', 'CREATE INDEX PKMVP.IX_TASK_COMMENT_TASK_CREATED ON PKMVP.TASK_COMMENT(TASK_ID, CREATED_AT)');
+    add_idx('IX_NOTIFICATION_USER_READ',    'CREATE INDEX PKMVP.IX_NOTIFICATION_USER_READ ON PKMVP.NOTIFICATION(USER_ID, IS_READ, CREATED_AT)');
+    add_idx('IX_BOARD_PROJECT',             'CREATE INDEX PKMVP.IX_BOARD_PROJECT ON PKMVP.BOARD(PROJECT_ID)');
+    add_idx('IX_SPRINT_BOARD_STATUS',       'CREATE INDEX PKMVP.IX_SPRINT_BOARD_STATUS ON PKMVP.SPRINT(BOARD_ID, STATUS)');
+    add_idx('IX_AUDIT_LOG_ENTITY',          'CREATE INDEX PKMVP.IX_AUDIT_LOG_ENTITY ON PKMVP.AUDIT_LOG(ENTITY_TYPE, ENTITY_ID, CREATED_AT)');
+END;
+/
+
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('V1 jira core schema migration complete.');
+END;
+/
