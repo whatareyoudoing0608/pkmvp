@@ -88,12 +88,17 @@ main() {
         docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
     fi
 
+    # Step 5b: Create network if not exists
+    log_info "Creating Docker network (if needed)..."
+    docker network create pkmvp-network 2>/dev/null || true
+
     # Step 6: Run container
     log_info "Starting container..."
     docker run -d \
         --name ${CONTAINER_NAME} \
         -p ${PORT}:80 \
         --restart unless-stopped \
+        --network pkmvp-network \
         ${IMAGE_NAME}:${IMAGE_TAG}
 
     if [ $? -eq 0 ]; then

@@ -81,6 +81,22 @@ cleanup_containers() {
     fi
 }
 
+create_network() {
+    print_section "Creating Docker network"
+    
+    if docker network ls --format '{{.Name}}' | grep -q "^pkmvp-network$"; then
+        log_info "Network 'pkmvp-network' already exists"
+    else
+        log_step "Creating network: pkmvp-network"
+        if docker network create pkmvp-network; then
+            log_info "✓ Network created successfully"
+        else
+            log_error "Failed to create network"
+            return 1
+        fi
+    fi
+}
+
 build_frontend() {
     print_section "Building Frontend Image"
     
@@ -134,6 +150,7 @@ start_backend() {
         -e ASPNETCORE_ENVIRONMENT=Production \
         -e ASPNETCORE_URLS=http://+:80 \
         --restart unless-stopped \
+        --network pkmvp-network \
         ${BE_IMAGE_NAME}:${IMAGE_TAG}
 
     if [ $? -eq 0 ]; then
@@ -164,6 +181,7 @@ start_frontend() {
         --name ${FE_CONTAINER_NAME} \
         -p ${FE_PORT}:80 \
         --restart unless-stopped \
+        --network pkmvp-network \
         ${FE_IMAGE_NAME}:${IMAGE_TAG}
 
     if [ $? -eq 0 ]; then
@@ -271,6 +289,9 @@ main() {
 
     # Cleanup
     cleanup_containers
+
+    # Create network
+    create_network || exit 1
 
     # Build images
     build_backend || exit 1
