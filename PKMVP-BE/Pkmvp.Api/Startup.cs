@@ -36,6 +36,16 @@ namespace Pkmvp.Api
             Oracle.ManagedDataAccess.Client.OracleConfiguration.BindByName = true;
             OracleConfiguration.BindByName = true;
 
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
+                });
+            });
+
             services.AddControllers();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -124,6 +134,8 @@ namespace Pkmvp.Api
             app.UseMiddleware<ApiExceptionMiddleware>();
 
             app.UseRouting();
+
+            app.UseCors();
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>
