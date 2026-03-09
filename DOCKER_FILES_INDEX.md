@@ -12,7 +12,7 @@ This directory contains everything needed to deploy PKMVP (Frontend React app + 
 - **Purpose:** Build React application with Vite and serve with Nginx
 - **Base Image:** `node:20-alpine` (build) + `nginx:alpine` (runtime)
 - **Size:** ~200MB
-- **Port:** 80
+- **Port:** 8085
 - **Build Time:** ~2-3 minutes
 
 ```bash
@@ -35,7 +35,7 @@ docker build -f Dockerfile.be -t pkmvp-backend:latest .
 ### 3. **docker-compose.yml** - Orchestration File
 - **Purpose:** Define and run both services with a single command
 - **Services:**
-  - `frontend` - React app on port 80
+  - `frontend` - React app on port 8085
   - `backend` - .NET API on port 8084
 - **Network:** `pkmvp-network` (automatic interconnection)
 - **Restart Policy:** `unless-stopped` (auto-restart on failure)
@@ -371,7 +371,7 @@ After deployment, verify:
    ```
 
 2. **Access services:**
-   - Frontend: http://localhost/
+   - Frontend: http://localhost:8085/
    - Backend: http://localhost:8084
    - Swagger: http://localhost:8084/swagger
 

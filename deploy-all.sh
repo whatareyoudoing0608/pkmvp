@@ -20,7 +20,7 @@ BE_IMAGE_NAME="pkmvp-backend"
 IMAGE_TAG="latest"
 FE_CONTAINER_NAME="pkmvp-frontend"
 BE_CONTAINER_NAME="pkmvp-backend"
-FE_PORT="80"
+FE_PORT="8085"
 BE_API_PORT="8084"
 BE_HTTPS_PORT="5001"
 
@@ -218,7 +218,7 @@ verify_health() {
 show_summary() {
     print_header "✓ Deployment Complete!"
     
-    local fe_url="http://localhost"
+    local fe_url="http://localhost:${FE_PORT}"
     local be_url="http://localhost:${BE_API_PORT}"
     local swagger_url="http://localhost:${BE_API_PORT}/swagger"
 

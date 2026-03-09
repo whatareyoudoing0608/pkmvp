@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile.fe
     container_name: pkmvp-frontend
     ports:
-      - "80:80"
+      - "8085:80"
     environment:
       - NGINX_PORT=80
     depends_on:

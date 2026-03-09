@@ -102,7 +102,7 @@ PKMVP Backend Deployment
 
 After deployment, access:
 
-- **Frontend:** http://localhost (Port 80)
+- **Frontend:** http://localhost:8085 (Port 8085)
 - **Backend API:** http://localhost:8084 (Port 8084)
 - **Backend Swagger:** http://localhost:8084/swagger (Port 8084)
 - **Backend HTTPS:** https://localhost:5001 (Port 5001)
