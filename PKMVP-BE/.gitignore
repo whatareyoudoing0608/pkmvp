@@ -1,0 +1,61 @@
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+.vscode/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# NuGet
+.nupkg
+*.nupkg
+*.snupkg
+.nuget/
+
+# IDE files
+*.csproj.user
+*.vbproj.user
+
+# Entity Framework
+*.edmx.sql
+
+# Local environment files
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rider
+.idea/
+
+# Build artifacts
+artifacts/
+publish/
+
+# Test Results
+TestResults/
+*.trx
+
+# Logs
+*.log
