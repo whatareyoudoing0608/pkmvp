@@ -42,6 +42,24 @@ print_header() {
     echo ""
 }
 
+update_source() {
+    log_info "Updating source code from git..."
+
+    if ! command -v git &> /dev/null; then
+        log_error "Git is not installed!"
+        exit 1
+    fi
+
+    if [ ! -d ".git" ]; then
+        log_error "Current directory is not a git repository!"
+        exit 1
+    fi
+
+    git fetch --all --prune
+    git pull --ff-only
+    log_info "✓ Source code updated"
+}
+
 # Main deployment process
 main() {
     print_header "PKMVP Backend Deployment"
@@ -53,6 +71,9 @@ main() {
         exit 1
     fi
     log_info "Docker found: $(docker --version)"
+
+    # Step 1b: Pull latest source code
+    update_source
 
     # Step 2: Verify Dockerfile exists
     log_info "Verifying Dockerfile.be exists..."
@@ -76,7 +97,7 @@ main() {
     log_info "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
     log_info "This may take several minutes (compiling .NET)..."
     
-    if docker build -f Dockerfile.be -t ${BE_IMAGE_NAME}:${IMAGE_TAG} --no-cache .; then
+    if docker build -f Dockerfile.be -t ${IMAGE_NAME}:${IMAGE_TAG} --no-cache .; then
         log_info "✓ Image built successfully"
     else
         log_error "Failed to build image"

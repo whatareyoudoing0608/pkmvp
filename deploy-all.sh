@@ -57,6 +57,25 @@ print_section() {
     echo ""
 }
 
+update_source() {
+    print_section "Updating Source Code"
+
+    if ! command -v git &> /dev/null; then
+        log_error "Git is not installed!"
+        return 1
+    fi
+
+    if [ ! -d ".git" ]; then
+        log_error "Current directory is not a git repository!"
+        return 1
+    fi
+
+    log_step "Pulling latest code from remote"
+    git fetch --all --prune
+    git pull --ff-only
+    log_info "✓ Source code updated"
+}
+
 cleanup_containers() {
     print_section "Cleaning up existing containers"
 
@@ -286,6 +305,9 @@ main() {
     if ! command -v docker-compose &> /dev/null; then
         log_warn "Docker Compose not found (optional)"
     fi
+
+    # Pull latest source code before deployment
+    update_source || exit 1
 
     # Cleanup
     cleanup_containers
