@@ -3,23 +3,41 @@ import { tokenStore } from "../auth/tokenStore";
 function resolveBaseUrl() {
   const configured = (import.meta.env.VITE_API_BASE_URL ?? "").trim();
 
-  if (configured) {
-    if (/^https?:\/\//i.test(configured)) {
-      return configured.replace(/\/$/, "");
+  try {
+    if (configured) {
+      // Already has protocol (http:// or https://)
+      if (/^https?:\/\//i.test(configured)) {
+        return new URL(configured).origin;
+      }
+
+      // Has protocol but missing // (like http:10.109.25.200:8084)
+      if (/^https?:/i.test(configured)) {
+        const fixed = configured.replace(/^(https?):(?!\/\/)/, "$1://");
+        return new URL(fixed).origin;
+      }
+
+      // No protocol, try to construct URL
+      if (typeof window !== "undefined") {
+        const url = new URL(`${window.location.protocol}//${configured}`);
+        return url.origin;
+      }
+
+      return `http://${configured}`;
     }
 
+    // Default: use current hostname + port 8084
     if (typeof window !== "undefined") {
-      return `${window.location.protocol}//${configured.replace(/\/$/, "")}`;
+      return `${window.location.protocol}//${window.location.hostname}:8084`;
     }
 
-    return `http://${configured.replace(/\/$/, "")}`;
+    return "";
+  } catch {
+    // Fallback if URL parsing fails
+    if (typeof window !== "undefined") {
+      return `${window.location.protocol}//${window.location.hostname}:8084`;
+    }
+    return "";
   }
-
-  if (typeof window !== "undefined") {
-    return `${window.location.protocol}//${window.location.hostname}:8084`;
-  }
-
-  return "";
 }
 
 const baseUrl = resolveBaseUrl();
