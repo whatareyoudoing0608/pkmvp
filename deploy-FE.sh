@@ -75,7 +75,7 @@ main() {
     log_info "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
     log_info "This may take a few minutes..."
     
-    if docker build -f Dockerfile.fe -t ${IMAGE_NAME}:${IMAGE_TAG} .; then
+    if docker build -f Dockerfile.fe -t ${FE_IMAGE_NAME}:${IMAGE_TAG} --no-cache .; then
         log_info "✓ Image built successfully"
     else
         log_error "Failed to build image"

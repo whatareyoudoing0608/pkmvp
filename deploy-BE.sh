@@ -76,7 +76,7 @@ main() {
     log_info "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
     log_info "This may take several minutes (compiling .NET)..."
     
-    if docker build -f Dockerfile.be -t ${IMAGE_NAME}:${IMAGE_TAG} .; then
+    if docker build -f Dockerfile.be -t ${BE_IMAGE_NAME}:${IMAGE_TAG} --no-cache .; then
         log_info "✓ Image built successfully"
     else
         log_error "Failed to build image"

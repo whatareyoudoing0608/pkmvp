@@ -109,7 +109,7 @@ build_frontend() {
     log_step "Building: ${FE_IMAGE_NAME}:${IMAGE_TAG}"
     log_info "This may take a few minutes..."
     
-    if docker build -f Dockerfile.fe -t ${FE_IMAGE_NAME}:${IMAGE_TAG} .; then
+    if docker build -f Dockerfile.fe -t ${FE_IMAGE_NAME}:${IMAGE_TAG} --no-cache .; then
         log_info "✓ Frontend image built successfully"
         return 0
     else
@@ -130,7 +130,7 @@ build_backend() {
     log_step "Building: ${BE_IMAGE_NAME}:${IMAGE_TAG}"
     log_info "This may take several minutes (compiling .NET)..."
     
-    if docker build -f Dockerfile.be -t ${BE_IMAGE_NAME}:${IMAGE_TAG} .; then
+    if docker build -f Dockerfile.be -t ${BE_IMAGE_NAME}:${IMAGE_TAG} --no-cache .; then
         log_info "✓ Backend image built successfully"
         return 0
     else
