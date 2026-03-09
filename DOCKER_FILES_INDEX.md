@@ -36,7 +36,7 @@ docker build -f Dockerfile.be -t pkmvp-backend:latest .
 - **Purpose:** Define and run both services with a single command
 - **Services:**
   - `frontend` - React app on port 80
-  - `backend` - .NET API on port 5000
+  - `backend` - .NET API on port 8084
 - **Network:** `pkmvp-network` (automatic interconnection)
 - **Restart Policy:** `unless-stopped` (auto-restart on failure)
 
@@ -52,7 +52,7 @@ docker-compose down
 - **Features:**
   - Gzip compression for static assets
   - Cache control for performance
-  - API proxy to backend: `/api/` → `http://backend:80`
+  - API proxy to backend: `/api/` → `http://backend:8084`
   - React Router fallback to `index.html`
   - Health endpoint for monitoring
 
@@ -139,7 +139,7 @@ chmod +x deploy-BE.sh
 1. Validates Docker is installed
 2. Stops & removes existing backend container
 3. Builds `pkmvp-backend:latest` image (.NET compilation)
-4. Runs container on ports 5000/5001
+4. Runs container on ports 8084/5001
 5. Waits for API to start
 6. Tests health endpoint
 7. Shows API URLs and logs commands
@@ -168,8 +168,8 @@ chmod +x deploy-all.sh
 # ╚════════════════════════════════════╝
 # Services Information:
 #   Frontend: http://localhost
-#   Backend: http://localhost:5000
-#   Swagger: http://localhost:5000/swagger
+#   Backend: http://localhost:8084
+#   Swagger: http://localhost:8084/swagger
 ```
 
 **What it does:**
@@ -372,8 +372,8 @@ After deployment, verify:
 
 2. **Access services:**
    - Frontend: http://localhost/
-   - Backend: http://localhost:5000
-   - Swagger: http://localhost:5000/swagger
+   - Backend: http://localhost:8084
+   - Swagger: http://localhost:8084/swagger
 
 3. **Monitor:**
    ```bash

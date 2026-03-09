@@ -94,8 +94,8 @@ PKMVP Backend Deployment
 ...
 [INFO] ✓ Container is running
 [INFO] Backend API is now running!
-[INFO] API URL: http://localhost:5000
-[INFO] Swagger: http://localhost:5000/swagger
+[INFO] API URL: http://localhost:8084
+[INFO] Swagger: http://localhost:8084/swagger
 ```
 
 ## Access Services
@@ -103,8 +103,8 @@ PKMVP Backend Deployment
 After deployment, access:
 
 - **Frontend:** http://localhost (Port 80)
-- **Backend API:** http://localhost:5000 (Port 5000)
-- **Backend Swagger:** http://localhost:5000/swagger (Port 5000)
+- **Backend API:** http://localhost:8084 (Port 8084)
+- **Backend Swagger:** http://localhost:8084/swagger (Port 8084)
 - **Backend HTTPS:** https://localhost:5001 (Port 5001)
 
 ## Docker Compose Alternative
@@ -222,7 +222,7 @@ services:
       - "80:80"  # Change first port to desired
   backend:
     ports:
-      - "5000:80"    # Change first port to desired
+      - "8084:80"    # Change first port to desired
       - "5001:443"   # HTTPS
 ```
 
@@ -253,7 +253,7 @@ docker inspect pkmvp-backend
 ```bash
 # Find process using port
 lsof -i :80
-lsof -i :5000
+lsof -i :8084
 
 # Kill process
 kill -9 <PID>
@@ -276,7 +276,7 @@ docker-compose up -d --build --no-cache
 Ensure backend is running before frontend:
 ```bash
 # Check if backend is responding
-curl http://localhost:5000/health
+curl http://localhost:8084/health
 
 # Check network
 docker inspect pkmvp-network

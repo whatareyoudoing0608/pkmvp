@@ -36,8 +36,8 @@ chmod +x deploy-FE.sh deploy-BE.sh deploy-all.sh
 
 ### Step 3: Access services
 - **Frontend:** http://localhost
-- **Backend API:** http://localhost:5000
-- **Swagger:** http://localhost:5000/swagger
+- **Backend API:** http://localhost:8084
+- **Swagger:** http://localhost:8084/swagger
 
 ---
 
@@ -46,7 +46,7 @@ chmod +x deploy-FE.sh deploy-BE.sh deploy-all.sh
 | Service | Port | Status | Logs |
 |---------|------|--------|----- |
 | Frontend | 80 | `docker ps \| grep pkmvp-frontend` | `docker logs -f pkmvp-frontend` |
-| Backend (HTTP) | 5000 | `docker ps \| grep pkmvp-backend` | `docker logs -f pkmvp-backend` |
+| Backend (HTTP) | 8084 | `docker ps \| grep pkmvp-backend` | `docker logs -f pkmvp-backend` |
 | Backend (HTTPS) | 5001 | `docker ps \| grep pkmvp-backend` | `docker logs -f pkmvp-backend` |
 
 ---
@@ -114,7 +114,7 @@ ports:
 Edit `docker-compose.yml` or `deploy-BE.sh`:
 ```yaml
 ports:
-  - "3000:80"   # Change 3000 to desired port
+  - "8084:80"   # Change 8084 to desired port
   - "3001:443"  # Change 3001 to desired HTTPS port
 ```
 

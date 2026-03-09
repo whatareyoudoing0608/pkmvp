@@ -21,7 +21,7 @@ IMAGE_TAG="latest"
 FE_CONTAINER_NAME="pkmvp-frontend"
 BE_CONTAINER_NAME="pkmvp-backend"
 FE_PORT="80"
-BE_API_PORT="5000"
+BE_API_PORT="8084"
 BE_HTTPS_PORT="5001"
 
 # Functions

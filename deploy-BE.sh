@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 IMAGE_NAME="pkmvp-backend"
 IMAGE_TAG="latest"
 CONTAINER_NAME="pkmvp-backend"
-API_PORT="5000"
+API_PORT="8084"
 HTTPS_PORT="5001"
 REGISTRY=""  # Set this if using registry (e.g., "myregistry.azurecr.io")
 
